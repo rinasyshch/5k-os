@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f0f11;
+  --card: #f8f8fa;
+  --card-foreground: #0f0f11;
+  --popover: #ffffff;
+  --popover-foreground: #0f0f11;
+  --primary: #6358d4;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f1f5;
+  --secondary-foreground: #5c5c6e;
+  --muted: #f1f1f5;
+  --muted-foreground: #8888a0;
+  --accent: #ebebf3;
+  --accent-foreground: #0f0f11;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e4e4ec;
+  --input: #f1f1f5;
+  --ring: #6358d4;
+  --radius: 0.5rem;
+
+  /* Custom accent for progress */
+  --accent-green: #16a34a;
+  --accent-amber: #d97706;
+  --accent-blue: #2563eb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
