@@ -2,6 +2,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export async function setupUser(email: string, password: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  })
+  if (error) return { error: error.message }
+  return { userId: data.user?.id }
+}
+
 export async function updateTask(id: string, data: Record<string, unknown>) {
   const supabase = await createClient()
   await supabase.from('tasks').update(data).eq('id', id)

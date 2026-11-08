@@ -13,8 +13,11 @@ import {
   BarChart3,
   Settings,
   Zap,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 const nav = [
   { href: '/today',     label: 'Today',          icon: LayoutDashboard },
@@ -30,6 +33,13 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+  }
 
   return (
     <aside className="w-56 shrink-0 flex flex-col bg-card border-r border-border h-screen sticky top-0">
@@ -68,11 +78,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Quick capture hint */}
-      <div className="px-3 py-3 border-t border-border">
+      {/* Bottom: quick capture hint + sign out */}
+      <div className="px-3 py-3 border-t border-border space-y-2">
         <p className="text-[10px] text-muted-foreground">
           Press <kbd className="px-1 py-0.5 rounded bg-secondary text-xs font-mono">⌘K</kbd> to quick capture
         </p>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full px-1"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Sign out
+        </button>
       </div>
     </aside>
   )
