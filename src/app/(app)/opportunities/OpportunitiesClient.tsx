@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, ExternalLink, CheckCircle, XCircle, Clock, AlertTriangle, Search } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { updateOpportunity, createOpportunity, createLead } from '@/app/actions'
 import { useRouter } from 'next/navigation'
 
 const CONF_COLOR = { High: 'bg-green-500/15 text-green-400', Medium: 'bg-amber-500/15 text-amber-400', Low: 'bg-gray-500/15 text-gray-400' }
@@ -21,7 +21,6 @@ export function OpportunitiesClient({ opportunities, inbox }: { opportunities: O
   const [form, setForm] = useState({ company: '', source_url: '', evidence_quote: '', why_needs_design: '', potential_service: '', next_step: '', confidence: 'Medium' as 'High' | 'Medium' | 'Low', contact_route: '' })
   const [urlError, setUrlError] = useState('')
   const router = useRouter()
-  const supabase = createClient()
 
   const pending = opportunities.filter(o => o.status === 'pending')
   const approved = opportunities.filter(o => o.status === 'approved')
@@ -30,19 +29,18 @@ export function OpportunitiesClient({ opportunities, inbox }: { opportunities: O
   async function handleApprove(id: string) {
     const opp = opportunities.find(o => o.id === id)
     if (!opp) return
-    // Create CRM lead
-    await supabase.from('leads').insert({
+    await createLead({
       company: opp.company, website: opp.source_url, buying_signal: opp.why_needs_design,
       evidence_url: opp.source_url, evidence_quote: opp.evidence_quote, verified_at: opp.verified_at,
       potential_service: opp.potential_service, contact_route: opp.contact_route,
       stage: 'Research', source: 'opportunity'
     })
-    await supabase.from('opportunities').update({ status: 'approved' }).eq('id', id)
+    await updateOpportunity(id, { status: 'approved' })
     router.refresh()
   }
 
   async function handleReject(id: string, reason: string) {
-    await supabase.from('opportunities').update({ status: 'rejected', reject_reason: reason }).eq('id', id)
+    await updateOpportunity(id, { status: 'rejected', reject_reason: reason })
     router.refresh()
   }
 
@@ -50,7 +48,7 @@ export function OpportunitiesClient({ opportunities, inbox }: { opportunities: O
     e.preventDefault()
     if (!form.source_url) { setUrlError('Source URL is required — no exceptions'); return }
     setUrlError('')
-    await supabase.from('opportunities').insert({
+    await createOpportunity({
       ...form,
       verified_at: new Date().toISOString(),
       status: 'pending',

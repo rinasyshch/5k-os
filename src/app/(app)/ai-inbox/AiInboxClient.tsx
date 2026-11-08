@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CheckCircle, XCircle, Edit2, Bot, Calendar, List, Clipboard, MessageSquare } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { updateProposal, approveProposalTask, updateAiPlan, createAiRequest } from '@/app/actions'
 import { useRouter } from 'next/navigation'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -30,7 +30,6 @@ export function AiInboxClient({ proposals, plans, requests, runLog }: {
   runLog: Array<{ id: string; agent: string; status: string; proposals_created: number; created_at: string; notes?: string }>
 }) {
   const router = useRouter()
-  const supabase = createClient()
   const [question, setQuestion] = useState('')
 
   const pending = proposals.filter(p => p.status === 'pending')
@@ -38,35 +37,32 @@ export function AiInboxClient({ proposals, plans, requests, runLog }: {
   async function handleApprove(id: string) {
     const proposal = proposals.find(p => p.id === id)
     if (!proposal) return
-
-    // Apply proposal to DB based on type
     if (proposal.type === 'task') {
-      await supabase.from('tasks').insert({ ...proposal.payload, source: 'agent' })
+      await approveProposalTask(proposal.payload as Record<string, unknown>)
     }
-
-    await supabase.from('ai_proposals').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', id)
+    await updateProposal(id, { status: 'approved', reviewed_at: new Date().toISOString() })
     router.refresh()
   }
 
   async function handleReject(id: string) {
-    await supabase.from('ai_proposals').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', id)
+    await updateProposal(id, { status: 'rejected', reviewed_at: new Date().toISOString() })
     router.refresh()
   }
 
   async function handlePlanApprove(id: string) {
-    await supabase.from('ai_plans').update({ status: 'approved' }).eq('id', id)
+    await updateAiPlan(id, { status: 'approved' })
     router.refresh()
   }
 
   async function handlePlanReject(id: string) {
-    await supabase.from('ai_plans').update({ status: 'rejected' }).eq('id', id)
+    await updateAiPlan(id, { status: 'rejected' })
     router.refresh()
   }
 
   async function submitQuestion(e: React.FormEvent) {
     e.preventDefault()
     if (!question.trim()) return
-    await supabase.from('ai_requests').insert({ question: question.trim(), status: 'open' })
+    await createAiRequest(question.trim())
     setQuestion('')
     router.refresh()
   }

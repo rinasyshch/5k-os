@@ -58,3 +58,40 @@ export async function deletePayment(id: string) {
   await supabase.from('payments').delete().eq('id', id)
   revalidatePath('/revenue')
 }
+
+export async function updateProposal(id: string, data: Record<string, unknown>) {
+  const supabase = await createClient()
+  await supabase.from('ai_proposals').update(data).eq('id', id)
+  revalidatePath('/ai-inbox')
+}
+
+export async function approveProposalTask(payload: Record<string, unknown>) {
+  const supabase = await createClient()
+  await supabase.from('tasks').insert({ ...payload, source: 'agent' })
+  revalidatePath('/tasks')
+}
+
+export async function updateAiPlan(id: string, data: Record<string, unknown>) {
+  const supabase = await createClient()
+  await supabase.from('ai_plans').update(data).eq('id', id)
+  revalidatePath('/ai-inbox')
+}
+
+export async function createAiRequest(question: string) {
+  const supabase = await createClient()
+  await supabase.from('ai_requests').insert({ question, status: 'open' })
+  revalidatePath('/ai-inbox')
+}
+
+export async function updateOpportunity(id: string, data: Record<string, unknown>) {
+  const supabase = await createClient()
+  await supabase.from('opportunities').update(data).eq('id', id)
+  revalidatePath('/opportunities')
+}
+
+export async function createOpportunity(data: Record<string, unknown>) {
+  const supabase = await createClient()
+  const { data: opp } = await supabase.from('opportunities').insert(data).select().single()
+  revalidatePath('/opportunities')
+  return opp
+}
