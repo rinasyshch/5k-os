@@ -101,7 +101,10 @@ async function handleCommand(text: string, chatId: number): Promise<void> {
     const focus = cmd.replace('/leads', '').trim() || undefined
     await sendMessage(chatId, '🔍 Запускаю поиск лидов (Gemini + Claude)...\nЭто займёт ~30 секунд.')
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('supabase.co', 'vercel.app') ?? 'https://5k-os-iota.vercel.app'}/api/agent/research`, {
+    const appUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : 'https://5k-os-iota.vercel.app'
+    const res = await fetch(`${appUrl}/api/agent/research`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.AGENT_TOKEN}`,
