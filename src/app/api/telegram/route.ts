@@ -143,8 +143,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Handle in background (Vercel serverless has 10s limit on response, but we process async)
-    handleCommand(message.text, message.chat.id).catch(console.error)
+    await handleCommand(message.text, message.chat.id).catch(console.error)
 
     return NextResponse.json({ ok: true })
   } catch {
