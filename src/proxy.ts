@@ -24,10 +24,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-  const isApiAgent = request.nextUrl.pathname.startsWith('/api/agent')
+  const isApi = request.nextUrl.pathname.startsWith('/api/')
 
-  // Agent API uses its own token auth, skip Supabase auth check
-  if (isApiAgent) return supabaseResponse
+  // API routes use their own auth (token or no auth), skip Supabase auth check
+  if (isApi) return supabaseResponse
 
   if (!user && !isAuthPage) {
     const url = request.nextUrl.clone()
