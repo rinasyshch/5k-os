@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getChallengeState, formatCurrency } from '@/lib/challenge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { toggleTask, toggleMilestone } from './actions'
 
 export default async function RoadmapPage() {
   const supabase = await createClient()
@@ -10,7 +11,10 @@ export default async function RoadmapPage() {
   const [{ data: weeks }, { data: milestones }, { data: tasks }, { data: payments }] = await Promise.all([
     supabase.from('roadmap_weeks').select('*').order('week_number'),
     supabase.from('milestones').select('*').order('week_number'),
-    supabase.from('tasks').select('id, title, week_number, status, priority, area').not('week_number', 'is', null).order('week_number'),
+    supabase.from('tasks').select('id, title, week_number, status, priority, area')
+      .not('week_number', 'is', null)
+      .not('status', 'eq', 'skipped')
+      .order('week_number'),
     supabase.from('payments').select('amount_usd, status').eq('status', 'received'),
   ])
 
@@ -69,7 +73,7 @@ export default async function RoadmapPage() {
           const doneTasks = weekTasks.filter(t => t.status === 'done').length
 
           return (
-            <Card key={week.week_number} className={`bg-card border-border ${isCurrent ? 'border-primary/40' : isPast ? 'opacity-60' : ''}`}>
+            <Card key={week.week_number} className={`bg-card border-border ${isCurrent ? 'border-primary/40' : isPast ? 'opacity-70' : ''}`}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex items-center gap-3">
@@ -89,30 +93,40 @@ export default async function RoadmapPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-foreground font-medium mb-2">{week.objective}</p>
+                <p className="text-sm text-foreground font-medium mb-3">{week.objective}</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   {weekMilestones.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Milestones</div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Milestones</div>
                       {weekMilestones.map((m: { id: string; title: string; status: string }) => (
-                        <div key={m.id} className={`flex items-center gap-2 text-xs ${m.status === 'done' ? 'text-green-400 line-through' : 'text-foreground'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.status === 'done' ? 'bg-green-400' : 'bg-muted-foreground'}`} />
-                          {m.title}
-                        </div>
+                        <form key={m.id} action={toggleMilestone.bind(null, m.id, m.status)}>
+                          <button type="submit" className={`flex items-center gap-2 text-xs w-full text-left hover:opacity-80 transition-opacity py-0.5 ${m.status === 'done' ? 'text-green-400' : 'text-foreground'}`}>
+                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${m.status === 'done' ? 'bg-green-500 border-green-500' : 'border-muted-foreground/50'}`}>
+                              {m.status === 'done' && <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </span>
+                            <span className={m.status === 'done' ? 'line-through opacity-60' : ''}>{m.title}</span>
+                          </button>
+                        </form>
                       ))}
                     </div>
                   )}
+
                   {weekTasks.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Tasks — {doneTasks}/{weekTasks.length} done</div>
-                      {weekTasks.slice(0, 6).map(t => (
-                        <div key={t.id} className={`flex items-center gap-2 text-xs ${t.status === 'done' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.status === 'done' ? 'bg-green-400' : t.priority === 'High' ? 'bg-red-400' : 'bg-muted-foreground'}`} />
-                          {t.title}
-                        </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">
+                        Tasks — {doneTasks}/{weekTasks.length} done
+                      </div>
+                      {weekTasks.map(t => (
+                        <form key={t.id} action={toggleTask.bind(null, t.id, t.status)}>
+                          <button type="submit" className={`flex items-center gap-2 text-xs w-full text-left hover:opacity-80 transition-opacity py-0.5 ${t.status === 'done' ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${t.status === 'done' ? 'bg-green-500 border-green-500' : t.priority === 'High' ? 'border-red-400/60' : 'border-muted-foreground/50'}`}>
+                              {t.status === 'done' && <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </span>
+                            <span className={t.status === 'done' ? 'line-through opacity-50' : ''}>{t.title}</span>
+                          </button>
+                        </form>
                       ))}
-                      {weekTasks.length > 6 && <div className="text-xs text-muted-foreground">+{weekTasks.length - 6} more</div>}
                     </div>
                   )}
                 </div>
